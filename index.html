@@ -72,7 +72,7 @@
 
   <script>
     const LIFF_ID = "2008146540-obAGgXgw";
-    const GLIDE_BASE_URL = "https://ezyrfq.glide.page/dl/818fd2";
+    const GLIDE_BASE_URL = "https://ezy.rakmao.com";
 
     let hasRetriedLogin = false;
 
@@ -120,16 +120,7 @@
         }
 
         $message.textContent = "กำลังพาไปยัง Rakmao PassGo ...";
-
-        // ใช้ liff.openWindow() เมื่ออยู่ใน LIFF client เพื่อให้ query params ไม่หาย
-        if (liff.isInClient()) {
-          liff.openWindow({
-            url: redirectUrl,
-            external: true
-          });
-        } else {
-          window.location.replace(redirectUrl);
-        }
+        window.location.replace(redirectUrl);
 
       } catch (err) {
         const $message = document.getElementById("message");
