@@ -120,7 +120,16 @@
         }
 
         $message.textContent = "กำลังพาไปยัง Rakmao PassGo ...";
-        window.location.replace(redirectUrl);
+
+        // ใช้ liff.openWindow() เมื่ออยู่ใน LIFF client เพื่อให้ query params ไม่หาย
+        if (liff.isInClient()) {
+          liff.openWindow({
+            url: redirectUrl,
+            external: true
+          });
+        } else {
+          window.location.replace(redirectUrl);
+        }
 
       } catch (err) {
         const $message = document.getElementById("message");
