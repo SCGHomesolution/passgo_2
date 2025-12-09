@@ -72,7 +72,6 @@
 
   <script>
     const LIFF_ID = "2008146540-obAGgXgw";
-    // ใช้ deep link ของ Glide (วิธี B)
     const GLIDE_BASE_URL = "https://ezyrfq.glide.page";
 
     let hasRetriedLogin = false;
@@ -90,7 +89,6 @@
           return;
         }
 
-        // ----- ดึงข้อมูลจาก LIFF -----
         let udid = "";
         const idToken = liff.getDecodedIDToken();
         if (idToken && idToken.sub) {
@@ -105,30 +103,20 @@
           udid = profile.userId;
         }
 
-        // payload ที่จะยัดลงใน type
-        const payload = {
-          flow: "passgo",          // ใช้ระบุ flow เผื่ออนาคตมีหลายโฟลว์
-          udid: udid || "",
-          name: name || "",
-          imageprofile: imageProfile || ""
-        };
-
-        // ----- ประกอบ URL ปลายทาง -----
         let redirectUrl = GLIDE_BASE_URL;
-
         try {
           const url = new URL(GLIDE_BASE_URL);
-
-          // ยัดทุกอย่างรวมเป็น JSON ใน type
-          url.searchParams.set("type", JSON.stringify(payload));
-
+          if (udid) url.searchParams.set("udid", udid);
+          if (name) url.searchParams.set("name", name);
+          if (imageProfile) url.searchParams.set("imageprofile", imageProfile);
           redirectUrl = url.toString();
         } catch (e) {
-          // fallback ถ้า URL() ใช้งานไม่ได้
           const params = new URLSearchParams();
-          params.set("type", JSON.stringify(payload));
-
-          redirectUrl = GLIDE_BASE_URL + "?" + params.toString();
+          if (udid) params.set("udid", udid);
+          if (name) params.set("name", name);
+          if (imageProfile) params.set("imageprofile", imageProfile);
+          const qs = params.toString();
+          redirectUrl = GLIDE_BASE_URL + (qs ? "?" + qs : "");
         }
 
         $message.textContent = "กำลังพาไปยัง Rakmao PassGo ...";
