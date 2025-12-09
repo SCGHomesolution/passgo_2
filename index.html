@@ -71,88 +71,97 @@
   </div>
 
   <script>
-  const LIFF_ID = "2008146540-obAGgXgw";
-  const GLIDE_BASE_URL = "https://ezyrfq.glide.page/dl/818fd2?type=passgo";
+    const LIFF_ID = "2008146540-obAGgXgw";
+    // ใช้ deep link ของ Glide (วิธี B)
+    const GLIDE_BASE_URL = "https://ezyrfq.glide.page/dl/818fd2";
 
-  let hasRetriedLogin = false;
+    let hasRetriedLogin = false;
 
-  async function main() {
-    const $message = document.getElementById("message");
-    const $error = document.getElementById("error");
-
-    try {
-      await liff.init({ liffId: LIFF_ID });
-
-      if (!liff.isLoggedIn()) {
-        $message.textContent = "กำลังพาไปหน้าเข้าสู่ระบบ LINE...";
-        liff.login();
-        return;
-      }
-
-      let udid = "";
-      const idToken = liff.getDecodedIDToken();
-      if (idToken && idToken.sub) {
-        udid = idToken.sub;
-      }
-
-      const profile = await liff.getProfile();
-      const name = profile.displayName || "";
-
-      if (!udid && profile.userId) {
-        udid = profile.userId;
-      }
-
-      let redirectUrl = GLIDE_BASE_URL;
-
-      try {
-        const url = new URL(GLIDE_BASE_URL);
-
-        if (udid) url.searchParams.set("udid", udid);
-        if (name) url.searchParams.set("name", name);
-        url.searchParams.set("type", "passgo");
-
-        redirectUrl = url.toString();
-      } catch (e) {
-        const params = new URLSearchParams();
-        if (udid) params.set("udid", udid);
-        if (name) params.set("name", name);
-        params.set("type", "passgo");
-
-        redirectUrl = GLIDE_BASE_URL + "?" + params.toString();
-      }
-
-      $message.textContent = "กำลังพาไปยัง Rakmao PassGo ...";
-      window.location.replace(redirectUrl);
-
-    } catch (err) {
+    async function main() {
       const $message = document.getElementById("message");
       const $error = document.getElementById("error");
-      console.error(err);
 
-      const errStr = String(err || "");
+      try {
+        await liff.init({ liffId: LIFF_ID });
 
-      if (!hasRetriedLogin && errStr.toLowerCase().includes("access token expired")) {
-        hasRetriedLogin = true;
-        $message.textContent = "กำลังต่ออายุการเข้าสู่ระบบ LINE...";
-        $error.textContent = "";
-
-        try {
-          liff.logout();
-        } catch (e) {
-          console.warn("logout error", e);
+        if (!liff.isLoggedIn()) {
+          $message.textContent = "กำลังพาไปหน้าเข้าสู่ระบบ LINE...";
+          liff.login();
+          return;
         }
 
-        liff.login();
-        return;
+        // ----- ดึงข้อมูลจาก LIFF -----
+        let udid = "";
+        const idToken = liff.getDecodedIDToken();
+        if (idToken && idToken.sub) {
+          udid = idToken.sub;
+        }
+
+        const profile = await liff.getProfile();
+        const name = profile.displayName || "";
+        const imageProfile = profile.pictureUrl || "";
+
+        if (!udid && profile.userId) {
+          udid = profile.userId;
+        }
+
+        // payload ที่จะยัดลงใน type
+        const payload = {
+          flow: "passgo",          // ใช้ระบุ flow เผื่ออนาคตมีหลายโฟลว์
+          udid: udid || "",
+          name: name || "",
+          imageprofile: imageProfile || ""
+        };
+
+        // ----- ประกอบ URL ปลายทาง -----
+        let redirectUrl = GLIDE_BASE_URL;
+
+        try {
+          const url = new URL(GLIDE_BASE_URL);
+
+          // ยัดทุกอย่างรวมเป็น JSON ใน type
+          url.searchParams.set("type", JSON.stringify(payload));
+
+          redirectUrl = url.toString();
+        } catch (e) {
+          // fallback ถ้า URL() ใช้งานไม่ได้
+          const params = new URLSearchParams();
+          params.set("type", JSON.stringify(payload));
+
+          redirectUrl = GLIDE_BASE_URL + "?" + params.toString();
+        }
+
+        $message.textContent = "กำลังพาไปยัง Rakmao PassGo ...";
+        window.location.replace(redirectUrl);
+
+      } catch (err) {
+        const $message = document.getElementById("message");
+        const $error = document.getElementById("error");
+        console.error(err);
+
+        const errStr = String(err || "");
+
+        if (!hasRetriedLogin && errStr.toLowerCase().includes("access token expired")) {
+          hasRetriedLogin = true;
+          $message.textContent = "กำลังต่ออายุการเข้าสู่ระบบ LINE...";
+          $error.textContent = "";
+
+          try {
+            liff.logout();
+          } catch (e) {
+            console.warn("logout error", e);
+          }
+
+          liff.login();
+          return;
+        }
+
+        $message.textContent = "ไม่สามารถดึงข้อมูลผู้ใช้จาก LIFF ได้";
+        $error.textContent = errStr;
       }
-
-      $message.textContent = "ไม่สามารถดึงข้อมูลผู้ใช้จาก LIFF ได้";
-      $error.textContent = errStr;
     }
-  }
 
-  main();
-</script>
-
+    main();
+  </script>
 </body>
 </html>
